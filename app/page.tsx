@@ -136,12 +136,19 @@ export default function ExpenseTracker() {
             <h1 className="text-3xl font-bold text-gray-900">💰 Expense Tracker Pro</h1>
             <p className="text-gray-600 mt-1">Complete expense management with budgets & analytics</p>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button onClick={() => setShowSettings(true)} variant="outline" className="flex-1 sm:flex-none">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => setShowSettings(true)}
+              variant="outline"
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
-            <Button onClick={() => setShowAddForm(true)} className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none">
+            <Button
+              onClick={() => setShowAddForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto order-1 sm:order-2"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Expense
             </Button>

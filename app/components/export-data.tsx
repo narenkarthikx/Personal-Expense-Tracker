@@ -234,11 +234,11 @@ export function ExportData({ expenses }: ExportDataProps) {
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Button
               onClick={exportToPDF}
               disabled={isExporting}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+              className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 w-full sm:flex-1"
             >
               <FileImage className="w-4 h-4" />
               {isExporting ? "Exporting..." : "Export PDF"}
@@ -247,7 +247,7 @@ export function ExportData({ expenses }: ExportDataProps) {
             <Button
               onClick={exportToExcel}
               disabled={isExporting}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 w-full sm:flex-1"
             >
               <FileSpreadsheet className="w-4 h-4" />
               {isExporting ? "Exporting..." : "Export Excel"}
@@ -257,7 +257,7 @@ export function ExportData({ expenses }: ExportDataProps) {
               onClick={exportToCSV}
               disabled={isExporting}
               variant="outline"
-              className="flex items-center gap-2 bg-transparent"
+              className="flex items-center justify-center gap-2 bg-transparent w-full sm:flex-1"
             >
               <FileText className="w-4 h-4" />
               {isExporting ? "Exporting..." : "Export CSV"}

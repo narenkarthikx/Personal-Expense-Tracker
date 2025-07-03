@@ -98,12 +98,12 @@ export function BudgetTracker({ expenses, budgets, categories, onBudgetUpdated }
       {/* Overall Budget Summary */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="space-y-4">
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5" />💰 Budget Overview -{" "}
               {new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
             </CardTitle>
-            <Button onClick={() => setShowAddBudget(true)} size="sm">
+            <Button onClick={() => setShowAddBudget(true)} size="sm" className="w-full sm:w-auto sm:self-end">
               <Plus className="w-4 h-4 mr-2" />
               Add Budget
             </Button>
@@ -193,7 +193,7 @@ export function BudgetTracker({ expenses, budgets, categories, onBudgetUpdated }
             <CardTitle>Add New Budget</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Category</Label>
                 <Select
