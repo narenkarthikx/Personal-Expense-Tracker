@@ -75,7 +75,7 @@ export function ExportData({ expenses }: ExportDataProps) {
       doc.setTextColor(255, 255, 255) // White text
       doc.setFontSize(24)
       doc.setFont("helvetica", "bold")
-      doc.text("💰 EXPENSE REPORT", 20, 25)
+      doc.text("$ EXPENSE REPORT", 20, 25)
 
       doc.setFontSize(12)
       doc.setFont("helvetica", "normal")
@@ -102,7 +102,7 @@ export function ExportData({ expenses }: ExportDataProps) {
       doc.setFontSize(16)
       doc.setFont("helvetica", "bold")
       doc.setTextColor(15, 23, 42)
-      doc.text("📊 EXECUTIVE SUMMARY", 15, yPosition + 10)
+      doc.text(">> EXECUTIVE SUMMARY", 15, yPosition + 10)
 
       const total = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
       const avgPerTransaction = total / filteredExpenses.length
@@ -121,10 +121,10 @@ export function ExportData({ expenses }: ExportDataProps) {
       doc.setFont("helvetica", "normal")
       doc.setTextColor(51, 65, 85)
       doc.text(`Period: ${dateRange}`, 15, yPosition + 20)
-      doc.text(`Total Expenses: ₹${total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, 15, yPosition + 27)
+      doc.text(`Total Expenses: Rs.${total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, 15, yPosition + 27)
       doc.text(`Total Transactions: ${filteredExpenses.length}`, 110, yPosition + 20)
       doc.text(
-        `Average per Transaction: ₹${avgPerTransaction.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        `Average per Transaction: Rs.${avgPerTransaction.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
         110,
         yPosition + 27,
       )
@@ -137,7 +137,7 @@ export function ExportData({ expenses }: ExportDataProps) {
       doc.setFontSize(16)
       doc.setFont("helvetica", "bold")
       doc.setTextColor(15, 23, 42)
-      doc.text("📈 CATEGORY BREAKDOWN", 15, yPosition)
+      doc.text(">> CATEGORY BREAKDOWN", 15, yPosition)
       yPosition += 10
 
       // Calculate category totals and percentages
@@ -157,13 +157,13 @@ export function ExportData({ expenses }: ExportDataProps) {
       const categoryTableData = sortedCategories.map(([category, amount], index) => [
         `${index + 1}.`,
         category,
-        `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        `Rs.${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
         `${((amount / total) * 100).toFixed(1)}%`,
-        "█".repeat(Math.ceil((amount / sortedCategories[0][1]) * 20)), // Visual bar
+        "■".repeat(Math.ceil((amount / sortedCategories[0][1]) * 15)), // Visual bar using squares
       ])
 
       autoTable(doc, {
-        head: [["#", "Category", "Amount", "% of Total", "Visual"]],
+        head: [["#", "Category", "Amount", "% of Total", "Visual Chart"]],
         body: categoryTableData,
         startY: yPosition,
         styles: {
@@ -180,10 +180,10 @@ export function ExportData({ expenses }: ExportDataProps) {
         },
         columnStyles: {
           0: { halign: "center", cellWidth: 15 },
-          1: { cellWidth: 60 },
+          1: { cellWidth: 55 },
           2: { halign: "right", cellWidth: 40 },
           3: { halign: "center", cellWidth: 25 },
-          4: { halign: "left", cellWidth: 50, textColor: [34, 197, 94] },
+          4: { halign: "left", cellWidth: 55, textColor: [34, 197, 94] },
         },
       })
 
@@ -195,7 +195,7 @@ export function ExportData({ expenses }: ExportDataProps) {
 
         doc.setFontSize(16)
         doc.setFont("helvetica", "bold")
-        doc.text("📅 SPENDING PATTERN", 15, yPosition)
+        doc.text(">> SPENDING PATTERN", 15, yPosition)
         yPosition += 10
 
         // Group by month
@@ -212,12 +212,12 @@ export function ExportData({ expenses }: ExportDataProps) {
           .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
           .map(([month, amount]) => [
             month,
-            `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-            "█".repeat(Math.ceil((amount / Math.max(...Object.values(monthlyData))) * 25)),
+            `Rs.${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+            "▓".repeat(Math.ceil((amount / Math.max(...Object.values(monthlyData))) * 20)),
           ])
 
         autoTable(doc, {
-          head: [["Month", "Total Spent", "Trend"]],
+          head: [["Month", "Total Spent", "Trend Chart"]],
           body: monthlyTableData,
           startY: yPosition,
           styles: { fontSize: 10 },
@@ -235,12 +235,57 @@ export function ExportData({ expenses }: ExportDataProps) {
         yPosition = (doc as any).lastAutoTable.finalY + 15
       }
 
+      // ===== TOP SPENDING DAYS =====
+      checkPageBreak(50)
+
+      doc.setFontSize(16)
+      doc.setFont("helvetica", "bold")
+      doc.text(">> TOP SPENDING DAYS", 15, yPosition)
+      yPosition += 10
+
+      // Group by day and find top spending days
+      const dailySpending = filteredExpenses.reduce(
+        (acc, expense) => {
+          const dayKey = expense.date
+          acc[dayKey] = (acc[dayKey] || 0) + expense.amount
+          return acc
+        },
+        {} as Record<string, number>,
+      )
+
+      const topSpendingDays = Object.entries(dailySpending)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([date, amount]) => [
+          new Date(date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" }),
+          `Rs.${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+          filteredExpenses.filter((e) => e.date === date).length + " transactions",
+        ])
+
+      autoTable(doc, {
+        head: [["Date", "Amount Spent", "Transactions"]],
+        body: topSpendingDays,
+        startY: yPosition,
+        styles: { fontSize: 10 },
+        headStyles: {
+          fillColor: [239, 68, 68],
+          textColor: [255, 255, 255],
+        },
+        columnStyles: {
+          0: { cellWidth: 70 },
+          1: { halign: "right", cellWidth: 50 },
+          2: { halign: "center", cellWidth: 70 },
+        },
+      })
+
+      yPosition = (doc as any).lastAutoTable.finalY + 15
+
       // ===== DETAILED TRANSACTIONS =====
       checkPageBreak(40)
 
       doc.setFontSize(16)
       doc.setFont("helvetica", "bold")
-      doc.text("📋 DETAILED TRANSACTIONS", 15, yPosition)
+      doc.text(">> DETAILED TRANSACTIONS", 15, yPosition)
       yPosition += 5
 
       // Sort expenses by date (newest first)
@@ -251,7 +296,7 @@ export function ExportData({ expenses }: ExportDataProps) {
       const transactionTableData = sortedExpenses.map((expense) => [
         new Date(expense.date).toLocaleDateString("en-IN"),
         expense.category,
-        `₹${expense.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        `Rs.${expense.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
         expense.description || "-",
       ])
 
@@ -264,12 +309,12 @@ export function ExportData({ expenses }: ExportDataProps) {
           cellPadding: 2,
         },
         headStyles: {
-          fillColor: [239, 68, 68],
+          fillColor: [59, 130, 246],
           textColor: [255, 255, 255],
           fontStyle: "bold",
         },
         alternateRowStyles: {
-          fillColor: [254, 242, 242],
+          fillColor: [239, 246, 255],
         },
         columnStyles: {
           0: { cellWidth: 30 },
@@ -281,7 +326,7 @@ export function ExportData({ expenses }: ExportDataProps) {
 
       // ===== FOOTER WITH INSIGHTS =====
       const finalY = (doc as any).lastAutoTable.finalY
-      if (finalY + 40 > 280) {
+      if (finalY + 50 > 280) {
         doc.addPage()
         yPosition = 20
       } else {
@@ -290,25 +335,35 @@ export function ExportData({ expenses }: ExportDataProps) {
 
       // Insights box
       doc.setFillColor(254, 249, 195) // Light yellow
-      doc.rect(10, yPosition, 190, 40, "F")
+      doc.rect(10, yPosition, 190, 45, "F")
       doc.setDrawColor(245, 158, 11)
-      doc.rect(10, yPosition, 190, 40, "S")
+      doc.rect(10, yPosition, 190, 45, "S")
 
       doc.setFontSize(14)
       doc.setFont("helvetica", "bold")
       doc.setTextColor(146, 64, 14)
-      doc.text("💡 KEY INSIGHTS", 15, yPosition + 10)
+      doc.text(">> KEY INSIGHTS & RECOMMENDATIONS", 15, yPosition + 10)
 
       doc.setFontSize(10)
       doc.setFont("helvetica", "normal")
       doc.setTextColor(120, 53, 15)
 
       const topCategory = sortedCategories[0]
+      const dayCount = Math.max(
+        1,
+        Math.ceil(
+          (new Date(sortedExpenses[0].date).getTime() -
+            new Date(sortedExpenses[sortedExpenses.length - 1].date).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      )
+
       const insights = [
-        `• Highest spending category: ${topCategory[0]} (₹${topCategory[1].toLocaleString("en-IN")})`,
-        `• Daily average: ₹${(total / Math.max(1, Math.ceil((new Date(sortedExpenses[0].date).getTime() - new Date(sortedExpenses[sortedExpenses.length - 1].date).getTime()) / (1000 * 60 * 60 * 24)))).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-        `• Most active spending day: ${new Date(sortedExpenses[0].date).toLocaleDateString("en-IN", { weekday: "long" })}`,
-        `• Categories tracked: ${Object.keys(categoryTotals).length}`,
+        `* Highest spending category: ${topCategory[0]} (Rs.${topCategory[1].toLocaleString("en-IN")})`,
+        `* Daily average spending: Rs.${(total / dayCount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        `* Most expensive single transaction: Rs.${Math.max(...filteredExpenses.map((e) => e.amount)).toLocaleString("en-IN")}`,
+        `* Categories tracked: ${Object.keys(categoryTotals).length} different categories`,
+        `* Recommendation: Focus on controlling ${topCategory[0]} expenses for maximum savings`,
       ]
 
       insights.forEach((insight, index) => {
@@ -318,7 +373,7 @@ export function ExportData({ expenses }: ExportDataProps) {
       // Footer
       doc.setFontSize(8)
       doc.setTextColor(107, 114, 128)
-      doc.text("Generated by Expense Tracker Pro | Keep tracking, keep saving! 💰", 15, 290)
+      doc.text("Generated by Expense Tracker Pro | Keep tracking, keep saving!", 15, 290)
       doc.text(`Page ${doc.getNumberOfPages()}`, 180, 290)
 
       // Save the PDF
@@ -354,9 +409,9 @@ export function ExportData({ expenses }: ExportDataProps) {
         ["Period", exportRange === "all" ? "All Time" : exportRange],
         ["", ""],
         ["FINANCIAL OVERVIEW", ""],
-        ["Total Expenses", `₹${total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`],
+        ["Total Expenses", `Rs.${total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`],
         ["Total Transactions", filteredExpenses.length],
-        ["Average per Transaction", `₹${avgPerTransaction.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`],
+        ["Average per Transaction", `Rs.${avgPerTransaction.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`],
         ["", ""],
         ["TOP CATEGORIES", "AMOUNT"],
       ]
@@ -374,7 +429,7 @@ export function ExportData({ expenses }: ExportDataProps) {
         .sort(([, a], [, b]) => b - a)
         .slice(0, 10)
         .forEach(([category, amount]) => {
-          summaryData.push([category, `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`])
+          summaryData.push([category, `Rs.${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`])
         })
 
       const summaryWs = XLSX.utils.aoa_to_sheet(summaryData)
@@ -554,6 +609,7 @@ export function ExportData({ expenses }: ExportDataProps) {
                 <li>• Executive summary with key metrics</li>
                 <li>• Visual category breakdown with charts</li>
                 <li>• Monthly spending trends</li>
+                <li>• Top spending days analysis</li>
                 <li>• Detailed transaction listing</li>
                 <li>• Smart insights & recommendations</li>
                 <li>• Professional formatting</li>
