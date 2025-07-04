@@ -100,7 +100,7 @@ export function BudgetTracker({ expenses, budgets, categories, onBudgetUpdated }
         <CardHeader>
           <div className="space-y-4">
             <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />💰 Budget Overview -{" "}
+              <Target className="w-5 h-5" />Budget Overview -{" "}
               {new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
             </CardTitle>
             <Button onClick={() => setShowAddBudget(true)} size="sm" className="w-full sm:w-auto sm:self-end">

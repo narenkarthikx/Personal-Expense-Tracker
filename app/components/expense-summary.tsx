@@ -82,7 +82,7 @@ export function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>📊 Expense Summary</CardTitle>
+            <CardTitle>Expense Summary</CardTitle>
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className="w-48">
                 <SelectValue />

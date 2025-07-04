@@ -133,8 +133,8 @@ export default function ExpenseTracker() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">💰 Expense Tracker Pro</h1>
-            <p className="text-gray-600 mt-1">Complete expense management with budgets & analytics</p>
+            <h1 className="text-3xl font-bold text-gray-900">Mexo - My Expenses Optimized</h1>
+            <p className="text-gray-600 mt-1">Expenses Managed with budgets & analytics</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button
