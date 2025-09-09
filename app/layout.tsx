@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "💰 Personal Expense Tracker",
   description: "Track your daily expenses with ease. A simple and effective expense management app.",
-    generator: 'v0.dev'
+    generator: 'expense-tracker-pwa'
 }
 
 export default function RootLayout({
