@@ -93,7 +93,7 @@ export default function ExpenseTracker() {
 
       setExpenses(expensesResult.data || [])
       setBudgets(budgetsResult.data || [])
-      setCategories(categoriesResult.data?.map((c) => c.name) || [])
+      setCategories(categoriesResult.data?.map((c: { name: string }) => c.name) || [])
     } catch (error) {
       console.error("Error fetching data:", error)
     } finally {

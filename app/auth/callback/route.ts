@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Route handlers must use dynamic rendering
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {

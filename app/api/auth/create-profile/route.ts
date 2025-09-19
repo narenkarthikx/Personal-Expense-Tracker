@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import type { Database } from '@/app/lib/database.types'
 
+// Route handlers must use dynamic rendering
 export const dynamic = 'force-dynamic'
 
 // Initialize Supabase client with Service Role for admin operations

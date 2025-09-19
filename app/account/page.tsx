@@ -1,17 +1,6 @@
 "use client"
 
-// Special rendering directives to disable static generation and prerendering
-// This ensures this page is only rendered on-demand on the client
-export const dynamic = 'force-dynamic'
-
-// Skip static generation - crucial for pages with auth
-export const generateStaticParams = () => []
-
-// Tell Next.js to always revalidate this page
-export const revalidate = 0
-
-// Use the edge runtime for better performance
-export const runtime = 'edge'
+// We'll handle client-side auth without server exports
 
 import { Suspense, useEffect } from "react"
 import { useRouter } from "next/navigation"
