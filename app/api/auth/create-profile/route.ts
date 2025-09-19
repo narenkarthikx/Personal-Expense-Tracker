@@ -1,40 +1,51 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-// Create a Supabase client with the service role key and timeout
-// This bypasses RLS policies for admin operations
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
-  throw new Error('Missing Supabase URL environment variable');
+// Check for environment variables, but don't throw during build time
+const missingUrl = !process.env.NEXT_PUBLIC_SUPABASE_URL
+const missingServiceKey = !process.env.SUPABASE_SERVICE_ROLE_KEY
+
+// Only log during server runtime, not during build
+if (typeof window === 'undefined' && (missingUrl || missingServiceKey)) {
+  if (missingUrl) console.error('NEXT_PUBLIC_SUPABASE_URL is not defined')
+  if (missingServiceKey) console.error('SUPABASE_SERVICE_ROLE_KEY is not defined')
 }
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('SUPABASE_SERVICE_ROLE_KEY is not defined');
-  throw new Error('Missing Supabase service role key environment variable');
-}
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    },
-    global: {
-      // Set a short timeout for admin operations (3 seconds)
-      fetch: (url, options = {}) => {
-        return fetch(url, {
-          ...options,
-          signal: AbortSignal.timeout(3000) // 3 second timeout
-        });
+// If running in development, we can use a mock client
+// In production, this will be initialized properly during runtime
+const supabaseAdmin = !missingUrl && !missingServiceKey 
+  ? createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+      process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        },
+        global: {
+          fetch: (url, options = {}) => {
+            return fetch(url, {
+              ...options,
+              signal: AbortSignal.timeout(3000)
+            });
+          }
+        }
       }
-    }
-  }
-)
+    )
+  : null
 
 export async function POST(request: Request) {
   try {
+    // During build time, we might not have the environment variables
+    // This check prevents runtime errors during build
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client not initialized - missing environment variables');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Configuration error - service is not fully initialized'
+      }, { status: 503 });
+    }
+
     const { id, name, email } = await request.json()
     
     if (!id || !email) {
