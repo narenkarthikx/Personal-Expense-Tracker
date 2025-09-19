@@ -66,7 +66,7 @@ export default function SignupPage() {
         } else if (signUpError.message?.includes("already registered")) {
           setError("This email is already registered. Please try signing in instead.");
         } else if (signUpError.message?.includes("timed out")) {
-          setError("The sign-up request is taking longer than expected. This may be due to a slow connection. Please try again.");
+          setError("The sign-up request is taking longer than expected. Please try using a different email or check your internet connection.");
         } else {
           setError(signUpError.message || "Failed to create account. Please try again.");
         }

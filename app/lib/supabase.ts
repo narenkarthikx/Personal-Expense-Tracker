@@ -4,10 +4,33 @@ import type { Database, UserProfile } from "./database-types"
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Default client with standard timeout
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+// Define fetch functions with different timeout durations
+const fetchWithStandardTimeout = (url: RequestInfo | URL, options: RequestInit = {}) => {
+  return fetch(url, {
+    ...options,
+    signal: AbortSignal.timeout(30000) // 30 second timeout for standard operations
+  });
+};
 
-// Client with shorter timeout for auth operations
+const fetchWithLongTimeout = (url: RequestInfo | URL, options: RequestInit = {}) => {
+  return fetch(url, {
+    ...options,
+    signal: AbortSignal.timeout(60000) // 60 second timeout for auth operations
+  });
+};
+
+// Default client with longer standard timeout
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+  },
+  global: {
+    fetch: fetchWithStandardTimeout
+  }
+})
+
+// Client with very extended timeout specifically for auth operations
 export const supabaseAuth = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -15,13 +38,7 @@ export const supabaseAuth = createClient<Database>(supabaseUrl, supabaseAnonKey,
     detectSessionInUrl: true
   },
   global: {
-    // Increased timeout for auth operations (10 seconds instead of 3)
-    fetch: (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        signal: AbortSignal.timeout(10000) // 10 second timeout
-      });
-    }
+    fetch: fetchWithLongTimeout
   }
 })
 

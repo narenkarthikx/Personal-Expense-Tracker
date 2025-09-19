@@ -26,7 +26,7 @@ const supabaseAdmin = !missingUrl && !missingServiceKey
           fetch: (url, options = {}) => {
             return fetch(url, {
               ...options,
-              signal: AbortSignal.timeout(3000)
+              signal: AbortSignal.timeout(30000) // Increased to 30 seconds
             });
           }
         }
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       .insert([{ id, name, email }]);
     
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database operation timed out')), 3000)
+      setTimeout(() => reject(new Error('Database operation timed out')), 30000) // Increased to 30 seconds
     );
     
     try {

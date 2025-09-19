@@ -132,9 +132,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           });
           
-          // Set a timeout for the signup process - increased from 5s to 15s
+          // Set a timeout for the signup process - increased to 30s
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Signup request timed out')), 15000)
+            setTimeout(() => reject(new Error('Signup request timed out')), 30000)
           );
           
           // Race between the signup and the timeout
