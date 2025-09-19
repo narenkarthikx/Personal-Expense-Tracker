@@ -2,7 +2,7 @@
 
 // We'll handle client-side auth without server exports
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Mail, Lock, LogIn } from "lucide-react"
@@ -20,8 +20,31 @@ export default function LoginPage() {
   
   const { signIn, isLoggedIn } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectPath = searchParams.get('redirect') || '/'
+  
+  // SearchParams component to extract redirect path with Suspense
+  function SearchParamsRedirect() {
+    const searchParams = useSearchParams()
+    const redirectPath = searchParams.get('redirect') || '/'
+    
+    // Store the redirectPath in localStorage so we can access it outside this component
+    useEffect(() => {
+      if (redirectPath) {
+        localStorage.setItem('redirectPath', redirectPath)
+      }
+    }, [redirectPath])
+    
+    return null
+  }
+  
+  // Get redirectPath from localStorage (set by SearchParamsRedirect)
+  const [redirectPath, setRedirectPath] = useState('/')
+  
+  useEffect(() => {
+    const storedPath = localStorage.getItem('redirectPath')
+    if (storedPath) {
+      setRedirectPath(storedPath)
+    }
+  }, [])
   
   // Redirect if already logged in
   useEffect(() => {
@@ -58,6 +81,11 @@ export default function LoginPage() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      {/* Wrap SearchParamsRedirect in Suspense */}
+      <Suspense fallback={null}>
+        <SearchParamsRedirect />
+      </Suspense>
+      
       <div className="container mx-auto px-4 max-w-md">
         <Button 
           variant="ghost" 
