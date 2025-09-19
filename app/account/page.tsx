@@ -3,6 +3,8 @@
 // Tell Next.js to never pre-render this page
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+// Add runtime for safe server rendering
+export const runtime = 'edge'
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
