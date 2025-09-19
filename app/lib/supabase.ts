@@ -15,11 +15,11 @@ export const supabaseAuth = createClient<Database>(supabaseUrl, supabaseAnonKey,
     detectSessionInUrl: true
   },
   global: {
-    // Shorter fetch timeout for auth operations (3 seconds)
+    // Increased timeout for auth operations (10 seconds instead of 3)
     fetch: (url, options = {}) => {
       return fetch(url, {
         ...options,
-        signal: AbortSignal.timeout(3000) // 3 second timeout
+        signal: AbortSignal.timeout(10000) // 10 second timeout
       });
     }
   }

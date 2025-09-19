@@ -91,74 +91,107 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Normalize the email address to lowercase
       const normalizedEmail = email.toLowerCase().trim();
       
-      // Set up a timeout for the signup process
-      const signupPromise = new Promise(async (resolve, reject) => {
+      // Maximum number of retries for signup
+      const maxRetries = 2;
+      let retryCount = 0;
+      let lastError = null;
+      
+      // Retry loop for signup
+      while (retryCount <= maxRetries) {
         try {
-          // Use the faster auth client for signup
-          const { data: { user }, error: signUpError } = await supabaseAuth.auth.signUp({
-            email: normalizedEmail,
-            password,
-            options: {
-              data: {
-                name: name, // Store name in user metadata
-              },
-              emailRedirectTo: `${window.location.origin}/auth/callback`
+          // Set up a timeout for the signup process
+          const signupPromise = new Promise(async (resolve, reject) => {
+            try {
+              // Use the faster auth client for signup
+              const { data: { user }, error: signUpError } = await supabaseAuth.auth.signUp({
+                email: normalizedEmail,
+                password,
+                options: {
+                  data: {
+                    name: name, // Store name in user metadata
+                  },
+                  emailRedirectTo: `${window.location.origin}/auth/callback`
+                }
+              });
+      
+              if (signUpError) {
+                console.error("Supabase signup error:", signUpError);
+                reject(signUpError);
+                return;
+              }
+      
+              if (!user) {
+                console.error("No user returned from signup");
+                reject(new Error("Failed to create user account"));
+                return;
+              }
+              
+              resolve(user);
+            } catch (error) {
+              reject(error);
             }
           });
-  
-          if (signUpError) {
-            console.error("Supabase signup error:", signUpError);
-            reject(signUpError);
-            return;
-          }
-  
-          if (!user) {
-            console.error("No user returned from signup");
-            reject(new Error("Failed to create user account"));
-            return;
-          }
           
-          resolve(user);
-        } catch (error) {
-          reject(error);
+          // Set a timeout for the signup process - increased from 5s to 15s
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Signup request timed out')), 15000)
+          );
+          
+          // Race between the signup and the timeout
+          const user: any = await Promise.race([signupPromise, timeoutPromise]);
+          
+          // If we get here, the signup was successful
+          
+          // Create the user profile in a non-blocking way
+          const profilePromise = fetch('/api/auth/create-profile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: user.id,
+              name,
+              email: normalizedEmail
+            }),
+          }).then(async response => {
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error("Profile creation failed:", errorData);
+              // Don't throw error here, just log it - we want to continue
+            }
+          }).catch(error => {
+            console.error("Profile error:", error);
+            // Don't propagate the error - we want to continue
+          });
+          
+          // Start refreshing the user session immediately, don't wait for profile creation
+          const refreshPromise = refreshUser();
+          
+          // Return success immediately, let the profile creation happen in the background
+          return { error: null, profilePromise, refreshPromise };
+        } catch (error: any) {
+          lastError = error;
+          
+          // Only retry on timeout or network errors
+          if (error.message?.includes('timed out') || 
+              error.message?.includes('network') ||
+              error.name === 'AbortError') {
+            retryCount++;
+            if (retryCount <= maxRetries) {
+              console.log(`Retrying signup after error: ${error.message} (Attempt ${retryCount} of ${maxRetries})`);
+              // Wait a bit before retrying (exponential backoff)
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+              continue;
+            }
+          } else {
+            // For other errors, don't retry
+            break;
+          }
         }
-      });
+      }
       
-      // Set a timeout for the signup process
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Signup request timed out')), 5000)
-      );
-      
-      // Race between the signup and the timeout
-      const user: any = await Promise.race([signupPromise, timeoutPromise]);
-      
-      // Create the user profile in a non-blocking way
-      const profilePromise = fetch('/api/auth/create-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: user.id,
-          name,
-          email: normalizedEmail
-        }),
-      }).then(async response => {
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Profile creation failed:", errorData);
-          // Don't throw error here, just log it - we want to continue
-        }
-      }).catch(error => {
-        console.error("Profile error:", error);
-        // Don't propagate the error - we want to continue
-      });
-      
-      // Start refreshing the user session immediately, don't wait for profile creation
-      const refreshPromise = refreshUser();
-      
-      // Return success immediately, let the profile creation happen in the background
-      return { error: null, profilePromise, refreshPromise };
+      // If we get here and lastError is not null, all retries failed
+      return { error: lastError };
     } catch (error) {
       console.error("Error signing up:", error);
       return { error };

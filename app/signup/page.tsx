@@ -26,8 +26,9 @@ export default function SignupPage() {
     e.preventDefault()
     setError(null)
 
-    // Validate email format using a more thorough regex
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // Improved email validation regex that allows more valid email formats
+    // This is more permissive than the previous regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address");
       return;
@@ -65,7 +66,7 @@ export default function SignupPage() {
         } else if (signUpError.message?.includes("already registered")) {
           setError("This email is already registered. Please try signing in instead.");
         } else if (signUpError.message?.includes("timed out")) {
-          setError("The sign-up request is taking longer than expected. Please try again.");
+          setError("The sign-up request is taking longer than expected. This may be due to a slow connection. Please try again.");
         } else {
           setError(signUpError.message || "Failed to create account. Please try again.");
         }
