@@ -3,9 +3,19 @@ import { NextResponse } from 'next/server'
 
 // Create a Supabase client with the service role key and timeout
 // This bypasses RLS policies for admin operations
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+  throw new Error('Missing Supabase URL environment variable');
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('SUPABASE_SERVICE_ROLE_KEY is not defined');
+  throw new Error('Missing Supabase service role key environment variable');
+}
+
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
   {
     auth: {
       autoRefreshToken: false,
@@ -33,6 +43,9 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // Log progress (helps with debugging)
+    console.log(`Creating profile for user ${id} with email ${email}`);
 
     // Create a timeout for the database operation
     const dbPromise = supabaseAdmin
