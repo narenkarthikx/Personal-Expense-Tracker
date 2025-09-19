@@ -1,19 +1,39 @@
 "use client"
 
-// Tell Next.js to never pre-render this page
+// Special rendering directives to disable static generation and prerendering
+// This ensures this page is only rendered on-demand on the client
 export const dynamic = 'force-dynamic'
+
+// Skip static generation - crucial for pages with auth
+export const generateStaticParams = () => []
+
+// Tell Next.js to always revalidate this page
 export const revalidate = 0
-// Add runtime for safe server rendering
+
+// Use the edge runtime for better performance
 export const runtime = 'edge'
 
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, LogOut, UserCircle } from "lucide-react"
 
-export default function AccountPage() {
+// Loading fallback component
+function AccountLoading() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading account information...</p>
+      </div>
+    </div>
+  )
+}
+
+// The main account page component
+function AccountContent() {
   const { user, isLoading, isLoggedIn, signOut } = useAuth()
   const router = useRouter()
 
@@ -31,14 +51,12 @@ export default function AccountPage() {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading account information...</p>
-        </div>
-      </div>
-    )
+    return <AccountLoading />
+  }
+
+  // Safety check - don't render if not logged in
+  if (!isLoggedIn || !user) {
+    return <AccountLoading />
   }
 
   // This will only render client-side after the useEffect check
@@ -90,5 +108,14 @@ export default function AccountPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+// Main export - wrap everything in Suspense
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<AccountLoading />}>
+      <AccountContent />
+    </Suspense>
   )
 }

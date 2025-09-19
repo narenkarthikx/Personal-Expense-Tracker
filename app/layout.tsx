@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "./context/auth-context"
+import { ConfigProvider } from "./context/config-context"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -39,11 +40,13 @@ export default function RootLayout({
       <head />
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <AuthProvider>
-            <main className="min-h-screen max-w-screen overflow-x-hidden">
-              {children}
-            </main>
-          </AuthProvider>
+          <ConfigProvider disableStaticRendering={true}>
+            <AuthProvider>
+              <main className="min-h-screen max-w-screen overflow-x-hidden">
+                {children}
+              </main>
+            </AuthProvider>
+          </ConfigProvider>
         </ThemeProvider>
       </body>
     </html>

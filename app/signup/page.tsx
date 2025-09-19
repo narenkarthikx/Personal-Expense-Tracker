@@ -1,6 +1,16 @@
 "use client"
 
-import { useState } from "react"
+// Special rendering directives to disable static generation and prerendering
+// This ensures this page is only rendered on-demand on the client
+export const dynamic = 'force-dynamic'
+
+// Skip static generation - crucial for pages with auth
+export const generateStaticParams = () => []
+
+// Tell Next.js to always revalidate this page
+export const revalidate = 0
+
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "../context/auth-context"
@@ -20,7 +30,14 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [signupStage, setSignupStage] = useState<'idle' | 'creating' | 'email-verification' | 'redirecting'>('idle')
   const router = useRouter()
-  const { signUp } = useAuth()
+  const { signUp, isLoggedIn } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      router.push('/')
+    }
+  }, [isLoggedIn, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

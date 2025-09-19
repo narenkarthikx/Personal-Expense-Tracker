@@ -1,7 +1,17 @@
 "use client"
 
+// Special rendering directives to disable static generation and prerendering
+// This ensures this page is only rendered on-demand on the client
+export const dynamic = 'force-dynamic'
+
+// Skip static generation - crucial for pages with auth
+export const generateStaticParams = () => []
+
+// Tell Next.js to always revalidate this page
+export const revalidate = 0
+
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Mail, Lock, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,13 +28,15 @@ export default function LoginPage() {
   
   const { signIn, isLoggedIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectPath = searchParams.get('redirect') || '/'
   
   // Redirect if already logged in
   useEffect(() => {
     if (isLoggedIn) {
-      router.push("/")
+      router.push(redirectPath)
     }
-  }, [isLoggedIn, router])
+  }, [isLoggedIn, router, redirectPath])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

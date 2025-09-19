@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { protectedRoutes } from './app/lib/routes'
 
 export async function middleware(request: NextRequest) {
   // Get the pathname of the request
   const path = request.nextUrl.pathname
 
-  // Define protected routes - routes that require authentication
-  const protectedRoutes = ['/account']
-  
   // Define auth routes - routes for authentication
   const authRoutes = ['/login', '/signup']
 
@@ -52,7 +50,9 @@ export async function middleware(request: NextRequest) {
       
       // If the user is not logged in and tries to access a protected route, redirect to login
       if (!isLoggedIn && isProtectedRoute) {
-        return NextResponse.redirect(new URL('/login', request.url))
+        const redirectUrl = new URL('/login', request.url)
+        redirectUrl.searchParams.set('redirect', path)
+        return NextResponse.redirect(redirectUrl)
       }
     } catch (error) {
       console.error('Middleware auth error:', error)
