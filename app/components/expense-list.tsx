@@ -14,9 +14,11 @@ interface ExpenseListProps {
   onExpenseDeleted: () => void
   onExpenseEdit: (expense: Expense) => void
   viewType: "daily" | "all"
+  selectedMonth?: number
+  selectedYear?: number
 }
 
-export function ExpenseList({ expenses, onExpenseDeleted, onExpenseEdit, viewType }: ExpenseListProps) {
+export function ExpenseList({ expenses, onExpenseDeleted, onExpenseEdit, viewType, selectedMonth, selectedYear }: ExpenseListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
 
@@ -35,9 +37,17 @@ export function ExpenseList({ expenses, onExpenseDeleted, onExpenseEdit, viewTyp
 
   let filteredExpenses = expenses
 
+  // First, filter by month/year if provided
+  if (selectedMonth !== undefined && selectedYear !== undefined) {
+    filteredExpenses = expenses.filter((expense) => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate.getMonth() === selectedMonth && expenseDate.getFullYear() === selectedYear;
+    });
+  }
+  
   if (viewType === "daily") {
     const today = new Date().toISOString().split("T")[0]
-    filteredExpenses = expenses.filter((expense) => expense.date === today)
+    filteredExpenses = filteredExpenses.filter((expense) => expense.date === today)
   }
 
   if (searchTerm) {
@@ -72,17 +82,15 @@ export function ExpenseList({ expenses, onExpenseDeleted, onExpenseEdit, viewTyp
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
 
+    // Format as DD-MM-YYYY with day name
+    const formattedDate = `${date.toLocaleDateString('en-US', { weekday: 'long' })}, ${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`
+
     if (dateString === today.toISOString().split("T")[0]) {
-      return "Today"
+      return `Today (${formattedDate})`
     } else if (dateString === yesterday.toISOString().split("T")[0]) {
-      return "Yesterday"
+      return `Yesterday (${formattedDate})`
     } else {
-      return date.toLocaleDateString("en-IN", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      return formattedDate
     }
   }
 
@@ -138,24 +146,45 @@ export function ExpenseList({ expenses, onExpenseDeleted, onExpenseEdit, viewTyp
                       <Calendar className="w-4 h-4" />
                       {formatDate(date)}
                     </CardTitle>
-                    <div className="text-lg font-semibold text-blue-600">₹{dayTotal.toFixed(2)}</div>
+                    <div>
+                      <div className="text-lg font-semibold text-blue-600">₹{dayTotal.toFixed(2)}</div>
+                      <div className="text-xs text-gray-500 text-right">{dayExpenses.length} transaction{dayExpenses.length !== 1 ? 's' : ''}</div>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {dayExpenses.map((expense) => (
-                    <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <Tag className="w-4 h-4 text-gray-500" />
                           <span className="font-medium text-sm text-blue-600">{expense.category}</span>
                         </div>
-                        {expense.description && <p className="text-sm text-gray-600 mb-1">{expense.description}</p>}
-                        <p className="text-xs text-gray-500">
-                          {new Date(expense.created_at).toLocaleTimeString("en-IN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
+                        <div className="mb-1">
+                          {expense.description ? (
+                            <p className="text-sm text-gray-600">{expense.description}</p>
+                          ) : (
+                            <p className="text-sm text-gray-400 italic">No description</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:gap-3 text-xs text-gray-500">
+                          <p>
+                            <span className="font-semibold">Transaction Date:</span> {new Date(expense.date).toLocaleDateString("en-US", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric"
+                            }).replace(/\//g, '-')}
+                          </p>
+                          <p>
+                            <span className="font-semibold">Added:</span> {new Date(expense.created_at).toLocaleString("en-US", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric"
+                            }).replace(/\//g, '-')}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-semibold text-lg">₹{expense.amount.toFixed(2)}</span>

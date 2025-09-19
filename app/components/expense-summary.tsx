@@ -8,6 +8,8 @@ import type { Expense } from "../page"
 
 interface ExpenseSummaryProps {
   expenses: Expense[]
+  selectedMonth?: number
+  selectedYear?: number
 }
 
 const COLORS = [
@@ -23,58 +25,126 @@ const COLORS = [
   "#D084D0",
 ]
 
-export function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
+export function ExpenseSummary({ expenses, selectedMonth, selectedYear }: ExpenseSummaryProps) {
   const [timeRange, setTimeRange] = useState("thisMonth")
 
   const filteredExpenses = useMemo(() => {
+    // If selectedMonth and selectedYear are provided, filter by those first
+    let baseExpenses = expenses;
+    
+    if (selectedMonth !== undefined && selectedYear !== undefined) {
+      baseExpenses = expenses.filter((expense) => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate.getMonth() === selectedMonth && expenseDate.getFullYear() === selectedYear;
+      });
+      
+      // If we're filtering by selected month/year, we don't need additional filtering
+      if (timeRange === "thisMonth") {
+        return baseExpenses;
+      }
+    }
+    
     const now = new Date()
 
     switch (timeRange) {
       case "thisWeek":
         const weekStart = new Date(now)
         weekStart.setDate(now.getDate() - now.getDay())
-        return expenses.filter((expense) => new Date(expense.date) >= weekStart)
+        return baseExpenses.filter((expense) => new Date(expense.date) >= weekStart)
 
       case "thisMonth":
-        return expenses.filter((expense) => {
+        if (selectedMonth !== undefined && selectedYear !== undefined) {
+          return baseExpenses;
+        }
+        return baseExpenses.filter((expense) => {
           const expenseDate = new Date(expense.date)
           return expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear()
         })
 
       case "lastMonth":
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-        return expenses.filter((expense) => {
-          const expenseDate = new Date(expense.date)
-          return expenseDate >= lastMonth && expenseDate <= lastMonthEnd
-        })
+        if (selectedMonth !== undefined && selectedYear !== undefined) {
+          const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+          const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+          return expenses.filter((expense) => {
+            const expenseDate = new Date(expense.date);
+            return expenseDate.getMonth() === prevMonth && expenseDate.getFullYear() === prevYear;
+          });
+        } else {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+          return baseExpenses.filter((expense) => {
+            const expenseDate = new Date(expense.date)
+            return expenseDate >= lastMonth && expenseDate <= lastMonthEnd
+          });
+        }
 
       case "last3Months":
-        const threeMonthsAgo = new Date(now)
-        threeMonthsAgo.setMonth(now.getMonth() - 3)
-        return expenses.filter((expense) => new Date(expense.date) >= threeMonthsAgo)
+        if (selectedMonth !== undefined && selectedYear !== undefined) {
+          let threeMonthsAgo = new Date(selectedYear, selectedMonth - 2, 1);
+          if (selectedMonth < 3) {
+            threeMonthsAgo = new Date(selectedYear - 1, 12 + (selectedMonth - 2), 1);
+          }
+          return expenses.filter((expense) => {
+            const expenseDate = new Date(expense.date);
+            return expenseDate >= threeMonthsAgo;
+          });
+        } else {
+          const threeMonthsAgo = new Date(now)
+          threeMonthsAgo.setMonth(now.getMonth() - 3)
+          return baseExpenses.filter((expense) => new Date(expense.date) >= threeMonthsAgo)
+        }
 
       default:
-        return expenses
+        return baseExpenses
     }
   }, [expenses, timeRange])
 
   const categoryData = useMemo(() => {
-    const categoryTotals = filteredExpenses.reduce(
-      (acc, expense) => {
-        acc[expense.category] = (acc[expense.category] || 0) + expense.amount
-        return acc
-      },
-      {} as Record<string, number>,
-    )
+    try {
+      // If no expenses, return empty array
+      if (!filteredExpenses || filteredExpenses.length === 0) {
+        return [];
+      }
+      
+      // Group expenses by category
+      const categoryTotals = filteredExpenses.reduce(
+        (acc, expense) => {
+          // Ensure category is never undefined/empty
+          const category = expense.category || "Uncategorized";
+          if (!acc[category]) {
+            acc[category] = 0;
+          }
+          acc[category] += expense.amount;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
-    return Object.entries(categoryTotals)
-      .map(([category, amount]) => ({ category, amount }))
-      .sort((a, b) => b.amount - a.amount)
-  }, [filteredExpenses])
+      // Convert to array and sort by amount (highest first)
+      return Object.entries(categoryTotals)
+        .map(([category, amount]) => ({ 
+          category, 
+          amount,
+          name: category, // Add name key for recharts compatibility
+          value: amount, // Add value key as alternative for recharts
+        }))
+        .sort((a, b) => b.amount - a.amount);
+    } catch (error) {
+      console.error("Error processing category data:", error);
+      return []; // Return empty array on error
+    }
+  }, [filteredExpenses]);
 
-  const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const topCategory = categoryData[0]
+  const totalAmount = useMemo(() => {
+    try {
+      return filteredExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    } catch (error) {
+      console.error("Error calculating total amount:", error);
+      return 0;
+    }
+  }, [filteredExpenses]);
+  
+  const topCategory = categoryData && categoryData.length > 0 ? categoryData[0] : null;
 
   return (
     <div className="space-y-6">
@@ -123,25 +193,31 @@ export function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
         </CardHeader>
         <CardContent>
           {categoryData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ category, percent }) => `${category} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="amount"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, "Amount"]} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="amount"
+                    nameKey="category"
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any) => [`₹${Number(value).toFixed(2)}`, "Amount"]} 
+                    labelFormatter={(name) => `Category: ${name}`}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
             <div className="h-[300px] flex items-center justify-center text-gray-500">No data available</div>
           )}

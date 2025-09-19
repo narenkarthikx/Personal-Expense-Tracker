@@ -12,33 +12,76 @@ import * as XLSX from "xlsx"
 
 interface ExportDataProps {
   expenses: Expense[]
+  selectedMonth?: number
+  selectedYear?: number
 }
 
-export function ExportData({ expenses }: ExportDataProps) {
+export function ExportData({ expenses, selectedMonth, selectedYear }: ExportDataProps) {
   const [exportRange, setExportRange] = useState("all")
   const [isExporting, setIsExporting] = useState(false)
 
   const getFilteredExpenses = () => {
+    // If selectedMonth and selectedYear are provided and exportRange is thisMonth, 
+    // filter by those first
+    if (selectedMonth !== undefined && selectedYear !== undefined && exportRange === "thisMonth") {
+      return expenses.filter((expense) => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate.getMonth() === selectedMonth && expenseDate.getFullYear() === selectedYear;
+      });
+    }
+    
     const now = new Date()
 
     switch (exportRange) {
       case "thisMonth":
+        if (selectedMonth !== undefined && selectedYear !== undefined) {
+          return expenses.filter((expense) => {
+            const expenseDate = new Date(expense.date);
+            return expenseDate.getMonth() === selectedMonth && expenseDate.getFullYear() === selectedYear;
+          });
+        }
         return expenses.filter((expense) => {
           const expenseDate = new Date(expense.date)
           return expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear()
         })
       case "lastMonth":
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-        return expenses.filter((expense) => {
-          const expenseDate = new Date(expense.date)
-          return expenseDate >= lastMonth && expenseDate <= lastMonthEnd
-        })
+        if (selectedMonth !== undefined && selectedYear !== undefined) {
+          const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+          const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+          return expenses.filter((expense) => {
+            const expenseDate = new Date(expense.date);
+            return expenseDate.getMonth() === prevMonth && expenseDate.getFullYear() === prevYear;
+          });
+        } else {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+          return expenses.filter((expense) => {
+            const expenseDate = new Date(expense.date)
+            return expenseDate >= lastMonth && expenseDate <= lastMonthEnd
+          })
+        }
       case "last3Months":
-        const threeMonthsAgo = new Date(now)
-        threeMonthsAgo.setMonth(now.getMonth() - 3)
-        return expenses.filter((expense) => new Date(expense.date) >= threeMonthsAgo)
+        if (selectedMonth !== undefined && selectedYear !== undefined) {
+          let threeMonthsAgo = new Date(selectedYear, selectedMonth - 2, 1);
+          if (selectedMonth < 3) {
+            threeMonthsAgo = new Date(selectedYear - 1, 12 + (selectedMonth - 2), 1);
+          }
+          return expenses.filter((expense) => {
+            const expenseDate = new Date(expense.date);
+            return expenseDate >= threeMonthsAgo;
+          });
+        } else {
+          const threeMonthsAgo = new Date(now)
+          threeMonthsAgo.setMonth(now.getMonth() - 3)
+          return expenses.filter((expense) => new Date(expense.date) >= threeMonthsAgo)
+        }
       case "thisYear":
+        if (selectedYear !== undefined) {
+          return expenses.filter((expense) => {
+            const expenseDate = new Date(expense.date)
+            return expenseDate.getFullYear() === selectedYear
+          })
+        }
         return expenses.filter((expense) => {
           const expenseDate = new Date(expense.date)
           return expenseDate.getFullYear() === now.getFullYear()
@@ -68,7 +111,9 @@ export function ExportData({ expenses }: ExportDataProps) {
       yPosition += 10
       doc.setFontSize(12)
       doc.setFont("helvetica", "normal")
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, yPosition)
+      const today = new Date();
+      const formattedDate = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getFullYear()}`;
+      doc.text(`Generated: ${formattedDate}`, 20, yPosition)
 
       const dateRange =
         exportRange === "all"
@@ -152,7 +197,11 @@ export function ExportData({ expenses }: ExportDataProps) {
         .slice(0, 20)
 
       const transactionTableData = recentExpenses.map((expense) => [
-        expense.date,
+        new Date(expense.date).toLocaleDateString("en-US", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        }).replace(/\//g, '-'),
         expense.category,
         `Rs.${expense.amount.toFixed(2)}`,
         expense.description || "-",
@@ -195,9 +244,11 @@ export function ExportData({ expenses }: ExportDataProps) {
 
       // Summary Sheet
       const total = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      const today = new Date();
+      const formattedDate = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getFullYear()}`;
       const summaryData = [
         ["Expense Report Summary"],
-        ["Generated On", new Date().toLocaleDateString()],
+        ["Generated On", formattedDate],
         ["Period", exportRange],
         [""],
         ["Total Expenses", total],
@@ -212,7 +263,11 @@ export function ExportData({ expenses }: ExportDataProps) {
       const expenseData = filteredExpenses
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .map((expense) => ({
-          Date: expense.date,
+          Date: new Date(expense.date).toLocaleDateString("en-US", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+          }).replace(/\//g, '-'),
           Category: expense.category,
           Amount: expense.amount,
           Description: expense.description || "",

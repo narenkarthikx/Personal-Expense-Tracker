@@ -17,9 +17,10 @@ interface EditExpenseFormProps {
   onClose: () => void
   onExpenseUpdated: () => void
   categories: string[]
+  userId?: string
 }
 
-export function EditExpenseForm({ expense, onClose, onExpenseUpdated, categories }: EditExpenseFormProps) {
+export function EditExpenseForm({ expense, onClose, onExpenseUpdated, categories, userId }: EditExpenseFormProps) {
   const [formData, setFormData] = useState({
     amount: expense.amount.toString(),
     category: expense.category,
@@ -63,6 +64,7 @@ export function EditExpenseForm({ expense, onClose, onExpenseUpdated, categories
           category: formData.category,
           description: formData.description,
           date: formData.date,
+          user_id: userId || expense.user_id
         })
         .eq("id", expense.id)
 

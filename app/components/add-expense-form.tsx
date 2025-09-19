@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,9 +15,11 @@ interface AddExpenseFormProps {
   onClose: () => void
   onExpenseAdded: () => void
   categories: string[]
+  userId?: string
+  selectedDate?: Date
 }
 
-export function AddExpenseForm({ onClose, onExpenseAdded, categories }: AddExpenseFormProps) {
+export function AddExpenseForm({ onClose, onExpenseAdded, categories, userId, selectedDate }: AddExpenseFormProps) {
   const [formData, setFormData] = useState({
     amount: "",
     category: "",
@@ -26,6 +28,15 @@ export function AddExpenseForm({ onClose, onExpenseAdded, categories }: AddExpen
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<{ amount?: string; category?: string }>({})
+
+  useEffect(() => {
+    if (selectedDate) {
+      setFormData(prev => ({
+        ...prev,
+        date: selectedDate.toISOString().split("T")[0]
+      }))
+    }
+  }, [selectedDate])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -60,6 +71,7 @@ export function AddExpenseForm({ onClose, onExpenseAdded, categories }: AddExpen
           category: formData.category,
           description: formData.description,
           date: formData.date,
+          user_id: userId
         },
       ])
 

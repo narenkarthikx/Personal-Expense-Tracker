@@ -12,9 +12,10 @@ interface CategoryManagerProps {
   categories: string[]
   onClose: () => void
   onCategoriesUpdated: () => void
+  userId?: string
 }
 
-export function CategoryManager({ categories, onClose, onCategoriesUpdated }: CategoryManagerProps) {
+export function CategoryManager({ categories, onClose, onCategoriesUpdated, userId }: CategoryManagerProps) {
   const [newCategory, setNewCategory] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -23,7 +24,10 @@ export function CategoryManager({ categories, onClose, onCategoriesUpdated }: Ca
 
     setLoading(true)
     try {
-      const { error } = await supabase.from("categories").insert([{ name: newCategory.trim() }])
+      const { error } = await supabase.from("categories").insert([{ 
+        name: newCategory.trim(),
+        user_id: userId || '' 
+      }])
       if (error) throw error
 
       setNewCategory("")
@@ -41,7 +45,12 @@ export function CategoryManager({ categories, onClose, onCategoriesUpdated }: Ca
 
     setLoading(true)
     try {
-      const { error } = await supabase.from("categories").delete().eq("name", categoryName)
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .eq("name", categoryName)
+        .eq("user_id", userId || '')  // Provide an empty string as fallback
+        
       if (error) throw error
 
       onCategoriesUpdated()
