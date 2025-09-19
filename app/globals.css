@@ -83,3 +83,31 @@ html {
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+.animate-pulse-slow {
+  animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .mobile-compact-view .card {
+    @apply p-2;
+  }
+  
+  .mobile-compact-view h3 {
+    @apply text-sm;
+  }
+  
+  .mobile-compact-view p, 
+  .mobile-compact-view span {
+    @apply text-xs;
+  }
+  
+  .mobile-compact-view .table-cell {
+    @apply py-1 px-2;
+  }
+  
+  .mobile-compact-view button.compact {
+    @apply p-1;
+  }
+}

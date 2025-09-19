@@ -18,7 +18,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [signupStage, setSignupStage] = useState<'idle' | 'creating' | 'redirecting'>('idle')
+  const [signupStage, setSignupStage] = useState<'idle' | 'creating' | 'email-verification' | 'redirecting'>('idle')
   const router = useRouter()
   const { signUp } = useAuth()
 
@@ -51,7 +51,7 @@ export default function SignupPage() {
 
     try {
       // Start sign-up process
-      const { error: signUpError, profilePromise, refreshPromise } = await signUp(email, password, name);
+      const { error: signUpError, profilePromise, refreshPromise, emailConfirmationRequired } = await signUp(email, password, name);
       
       if (signUpError) {
         console.error("Signup error details:", signUpError);
@@ -70,6 +70,10 @@ export default function SignupPage() {
         } else {
           setError(signUpError.message || "Failed to create account. Please try again.");
         }
+      } else if (emailConfirmationRequired) {
+        // If email confirmation is required, show a different message
+        setSignupStage('email-verification');
+        setIsSubmitting(false);
       } else {
         // Update UI state immediately
         setSignupStage('redirecting');
@@ -106,6 +110,14 @@ export default function SignupPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            {signupStage === 'email-verification' && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertDescription className="text-blue-800">
+                  <p className="font-medium">Check your email!</p>
+                  <p>We've sent a verification link to {email}. Please check your inbox and click the link to complete your registration.</p>
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -114,6 +126,7 @@ export default function SignupPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={signupStage === 'email-verification'}
               />
             </div>
             <div className="space-y-2">
@@ -125,6 +138,7 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={signupStage === 'email-verification'}
               />
             </div>
             <div className="space-y-2">
@@ -135,6 +149,7 @@ export default function SignupPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={signupStage === 'email-verification'}
               />
             </div>
             <div className="space-y-2">
@@ -145,16 +160,32 @@ export default function SignupPage() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={signupStage === 'email-verification'}
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col">
-            <Button type="submit" className="w-full mb-4" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              className="w-full mb-4" 
+              disabled={isSubmitting || signupStage === 'email-verification'}
+            >
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {signupStage === 'idle' && "Create account"}
               {signupStage === 'creating' && "Creating account..."}
+              {signupStage === 'email-verification' && "Check your email"}
               {signupStage === 'redirecting' && "Success! Redirecting..."}
             </Button>
+            {signupStage === 'email-verification' && (
+              <Button 
+                type="button"
+                variant="outline"
+                className="w-full mb-4"
+                onClick={() => setSignupStage('idle')}
+              >
+                Try with a different email
+              </Button>
+            )}
             <p className="text-center text-sm text-gray-600">
               Already have an account?{" "}
               <Link href="/login" className="text-blue-600 hover:underline">

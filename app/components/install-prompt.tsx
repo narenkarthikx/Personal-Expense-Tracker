@@ -19,15 +19,22 @@ export function InstallPrompt() {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
 
-      // Don't show immediately, wait a bit for user to explore
+      // Show prompt more quickly on mobile devices
+      const showDelay = window.innerWidth < 768 ? 3000 : 8000 // 3 seconds on mobile, 8 on desktop
+      
       setTimeout(() => {
-        if (!sessionStorage.getItem("installPromptDismissed")) {
+        if (!localStorage.getItem("installPromptDismissed")) {
           setShowPrompt(true)
         }
-      }, 10000) // Show after 10 seconds
+      }, showDelay)
     }
 
     window.addEventListener("beforeinstallprompt", handler)
+    
+    // If app is already installed, don't show the prompt
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowPrompt(false)
+    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler)
@@ -48,30 +55,36 @@ export function InstallPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false)
-    sessionStorage.setItem("installPromptDismissed", "true")
+    localStorage.setItem("installPromptDismissed", "true")
   }
 
-  if (!showPrompt || !deferredPrompt) return null
+  // If already installed or not available, don't show
+  if (!showPrompt || !deferredPrompt || window.matchMedia('(display-mode: standalone)').matches) return null
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 max-w-sm mx-auto">
-      <Card className="border-blue-200 bg-blue-50 shadow-lg">
+      <Card className="border-blue-200 bg-blue-50 shadow-lg animate-pulse-slow">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
               <Smartphone className="w-6 h-6 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-blue-900 mb-1">📱 Install App</h3>
-              <p className="text-sm text-blue-700 mb-3">
-                Add Expense Tracker to your home screen for quick access and offline use!
+              <h3 className="font-semibold text-blue-900 mb-1">📱 Install for Offline Use</h3>
+              <p className="text-sm text-blue-700 mb-2">
+                Add Expense Tracker to your home screen for:
               </p>
+              <ul className="text-xs text-blue-600 mb-3 pl-2">
+                <li>• Quick access anytime</li>
+                <li>• Full offline functionality</li>
+                <li>• Better mobile experience</li>
+              </ul>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleInstall} className="bg-blue-600 hover:bg-blue-700">
+                <Button size="sm" onClick={handleInstall} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                   <Plus className="w-4 h-4 mr-1" />
-                  Install
+                  Install Now
                 </Button>
-                <Button size="sm" variant="ghost" onClick={handleDismiss}>
+                <Button size="sm" variant="ghost" onClick={handleDismiss} className="ml-auto">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
