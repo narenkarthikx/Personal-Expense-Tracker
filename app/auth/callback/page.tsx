@@ -1,44 +1,46 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/app/lib/supabase";
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "../../lib/supabase"
 
-export default function AuthCallback() {
-  const router = useRouter();
+export default function AuthCallbackPage() {
+  const router = useRouter()
 
   useEffect(() => {
-    const handleEmailVerification = async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+    const handleAuthCallback = async () => {
+      // Get the hash params
+      const hashParams = window.location.hash
+        .substring(1)
+        .split("&")
+        .reduce((params, param) => {
+          const [key, value] = param.split("=")
+          params[key] = value
+          return params
+        }, {} as Record<string, string>)
 
-      if (error) {
-        console.error("Error handling email verification:", error);
-        router.push("/login?error=verification-failed");
-        return;
+      // Process auth callback
+      try {
+        // Exchange the code for a session
+        await supabase.auth.exchangeCodeForSession(hashParams.access_token || window.location.hash)
+
+        // Redirect to the home page
+        router.push("/")
+      } catch (error) {
+        console.error("Error processing auth callback:", error)
+        router.push("/login?error=callback_error")
       }
+    }
 
-      if (session) {
-        // User is logged in after email verification
-        router.push("/");
-      } else {
-        // User needs to login
-        router.push("/login?verified=true");
-      }
-    };
-
-    handleEmailVerification();
-  }, [router]);
+    handleAuthCallback()
+  }, [router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <h2 className="text-xl font-medium mb-2">Verifying your email...</h2>
-        <p className="text-gray-600">Please wait while we complete the verification process.</p>
+        <p className="text-gray-600">Processing authentication...</p>
       </div>
     </div>
-  );
+  )
 }

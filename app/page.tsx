@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, TrendingUp, Calendar, Settings, Smartphone, Monitor } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -56,6 +57,7 @@ export default function ExpenseTracker() {
   const [showSettings, setShowSettings] = useState(false)
   const [compactView, setCompactView] = useState(false)
   const isMobile = useIsMobile()
+  const router = useRouter()
 
   // Set compact view automatically on mobile
   useEffect(() => {
@@ -184,6 +186,9 @@ export default function ExpenseTracker() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowSettings(true)}>
                   Manage Categories
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/account")}>
+                  Account Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="flex justify-between" onSelect={(e) => e.preventDefault()}>
