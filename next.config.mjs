@@ -27,6 +27,8 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
+  // Output standalone for better containerization
+  output: 'standalone',
   // Headers for PWA
   async headers() {
     return [

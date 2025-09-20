@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: expense-tracker-pwa
+    env: node
+    plan: free
+    buildCommand: pnpm install --no-frozen-lockfile; pnpm run build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+    healthCheckPath: /
+    autoDeploy: true
