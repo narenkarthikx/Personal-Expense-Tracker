@@ -10,39 +10,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress"
 import { supabase } from "../lib/supabase"
 import type { Expense, Budget } from "../page"
-import { useAuth } from "../context/auth-context"
 
 interface BudgetTrackerProps {
   expenses: Expense[]
   budgets: Budget[]
   categories: string[]
   onBudgetUpdated: () => void
-  selectedMonth: number
-  selectedYear: number
 }
 
-export function BudgetTracker({ 
-  expenses, 
-  budgets, 
-  categories, 
-  onBudgetUpdated,
-  selectedMonth,
-  selectedYear
-}: BudgetTrackerProps) {
-  const { user } = useAuth()
+export function BudgetTracker({ expenses, budgets, categories, onBudgetUpdated }: BudgetTrackerProps) {
   const [showAddBudget, setShowAddBudget] = useState(false)
   const [newBudget, setNewBudget] = useState({
     category: "",
     amount: "",
+    month: new Date().getMonth().toString(),
+    year: new Date().getFullYear().toString(),
+  })
+  const isMobile = window.innerWidth < 768
+
+  const currentMonth = new Date().getMonth()
+  const currentYear = new Date().getFullYear()
+
+  const currentMonthExpenses = expenses.filter((expense) => {
+    const expenseDate = new Date(expense.date)
+    return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear
   })
 
-  const months = [
-    "january", "february", "march", "april", "may", "june",
-    "july", "august", "september", "october", "november", "december"
-  ]
-
-  // We already have filtered expenses for the selected month
-  const categorySpending = expenses.reduce(
+  const categorySpending = currentMonthExpenses.reduce(
     (acc, expense) => {
       acc[expense.category] = (acc[expense.category] || 0) + expense.amount
       return acc
@@ -51,9 +45,7 @@ export function BudgetTracker({
   )
 
   const currentBudgets = budgets.filter(
-    (budget) => 
-      budget.month.toLowerCase() === months[selectedMonth] && 
-      budget.year === selectedYear
+    (budget) => budget.month === currentMonth.toString() && budget.year === currentYear,
   )
 
   const handleAddBudget = async () => {
@@ -64,9 +56,8 @@ export function BudgetTracker({
         {
           category: newBudget.category,
           amount: Number.parseFloat(newBudget.amount),
-          month: months[selectedMonth],
-          year: selectedYear,
-          user_id: user?.id
+          month: newBudget.month,
+          year: Number.parseInt(newBudget.year),
         },
       ])
 
@@ -75,6 +66,8 @@ export function BudgetTracker({
       setNewBudget({
         category: "",
         amount: "",
+        month: new Date().getMonth().toString(),
+        year: new Date().getFullYear().toString(),
       })
       setShowAddBudget(false)
       onBudgetUpdated()
@@ -106,11 +99,16 @@ export function BudgetTracker({
       {/* Overall Budget Summary */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="space-y-4">
             <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />Budget Overview - {months[selectedMonth].charAt(0).toUpperCase() + months[selectedMonth].slice(1)} {selectedYear}
+              <Target className="w-5 h-5" />
+              {isMobile ? (
+                <>Budget - {new Date().toLocaleDateString("en-IN", { month: "short" })}</>
+              ) : (
+                <>Budget Overview - {new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</>
+              )}
             </CardTitle>
-            <Button onClick={() => setShowAddBudget(true)} size="sm">
+            <Button onClick={() => setShowAddBudget(true)} size="sm" className="w-full sm:w-auto sm:self-end">
               <Plus className="w-4 h-4 mr-2" />
               Add Budget
             </Button>
@@ -191,14 +189,6 @@ export function BudgetTracker({
             </Card>
           )
         })}
-
-        {currentBudgets.length === 0 && (
-          <Card className="md:col-span-2">
-            <CardContent className="py-8 text-center">
-              <p className="text-gray-500">No budgets set for this month. Add your first budget!</p>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {/* Add Budget Form */}

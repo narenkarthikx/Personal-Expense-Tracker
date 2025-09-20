@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Expense Tracker Pro",
-    short_name: "ExpenseTracker",
+    name: "Mexo - My Expenses Optimized",
+    short_name: "Mexo",
     description:
-      "Complete expense management with budgets, analytics, and export features. Track your spending like a pro!",
+      "Track expenses, set budgets, and analyze your spending patterns - all in one app.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

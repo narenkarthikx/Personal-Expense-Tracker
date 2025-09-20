@@ -175,9 +175,9 @@ export default function ExpenseTracker() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="h-9"
+                  className={`${compactView ? 'h-10 w-10 p-2' : 'h-9'}`}
                 >
-                  <Settings className="w-4 h-4 mr-2" />
+                  <Settings className={`${compactView ? 'w-5 h-5' : 'w-4 h-4 mr-2'}`} />
                   {compactView ? '' : 'Settings'}
                 </Button>
               </DropdownMenuTrigger>
@@ -191,28 +191,30 @@ export default function ExpenseTracker() {
                   Account Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex justify-between" onSelect={(e) => e.preventDefault()}>
-                  <div className="flex items-center gap-2">
-                    {compactView ? (
-                      <Smartphone className="w-4 h-4" />
-                    ) : (
-                      <Monitor className="w-4 h-4" />
-                    )}
-                    <span>Compact View</span>
-                  </div>
-                  <Switch 
-                    checked={compactView} 
-                    onCheckedChange={setCompactView}
-                  />
-                </DropdownMenuItem>
+                {!isMobile && (
+                  <DropdownMenuItem className="flex justify-between" onSelect={(e) => e.preventDefault()}>
+                    <div className="flex items-center gap-2">
+                      {compactView ? (
+                        <Smartphone className="w-4 h-4" />
+                      ) : (
+                        <Monitor className="w-4 h-4" />
+                      )}
+                      <span>Compact View</span>
+                    </div>
+                    <Switch 
+                      checked={compactView} 
+                      onCheckedChange={setCompactView}
+                    />
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
             
             <Button
               onClick={() => setShowAddForm(true)}
-              className="bg-blue-600 hover:bg-blue-700"
+              className={`bg-blue-600 hover:bg-blue-700 ${compactView ? 'h-10 p-2' : ''}`}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className={`${compactView ? 'w-5 h-5' : 'w-4 h-4 mr-2'}`} />
               {compactView ? 'Add' : 'Add Expense'}
             </Button>
           </div>

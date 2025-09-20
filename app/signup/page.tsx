@@ -89,8 +89,8 @@ export default function SignupPage() {
         
         // Short delay to show the redirecting state
         setTimeout(() => {
-          // Immediately redirect to dashboard while background processes finish
-          router.push("/");
+          // Redirect to onboarding page instead of dashboard
+          router.push("/onboarding");
         
           // Let the background processes complete
           if (profilePromise) profilePromise.catch(console.error);

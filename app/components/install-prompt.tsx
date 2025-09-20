@@ -20,20 +20,34 @@ export function InstallPrompt() {
       setDeferredPrompt(e as BeforeInstallPromptEvent)
 
       // Show prompt more quickly on mobile devices
-      const showDelay = window.innerWidth < 768 ? 3000 : 8000 // 3 seconds on mobile, 8 on desktop
+      const showDelay = window.innerWidth < 768 ? 1500 : 5000 // 1.5 seconds on mobile, 5 on desktop
       
-      setTimeout(() => {
-        if (!localStorage.getItem("installPromptDismissed")) {
+      // Clear previous timeout if any
+      const timeoutId = setTimeout(() => {
+        // Check if app is not in standalone mode and prompt hasn't been dismissed
+        if (!window.matchMedia('(display-mode: standalone)').matches && 
+            !localStorage.getItem("installPromptDismissed")) {
           setShowPrompt(true)
+          console.log("Showing install prompt")
         }
       }, showDelay)
+      
+      return () => clearTimeout(timeoutId)
     }
 
     window.addEventListener("beforeinstallprompt", handler)
     
-    // If app is already installed, don't show the prompt
+    // Check if app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setShowPrompt(false)
+    } else {
+      // Force showing prompt for testing (remove in production)
+      setTimeout(() => {
+        if (!localStorage.getItem("installPromptDismissed")) {
+          setShowPrompt(true)
+          console.log("Forcing install prompt")
+        }
+      }, 3000)
     }
 
     return () => {
@@ -59,25 +73,25 @@ export function InstallPrompt() {
   }
 
   // If already installed or not available, don't show
-  if (!showPrompt || !deferredPrompt || window.matchMedia('(display-mode: standalone)').matches) return null
+  if (!showPrompt || window.matchMedia('(display-mode: standalone)').matches) return null
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 max-w-sm mx-auto">
-      <Card className="border-blue-200 bg-blue-50 shadow-lg animate-pulse-slow">
+      <Card className="border-blue-200 bg-blue-50 shadow-lg">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <Smartphone className="w-6 h-6 text-blue-600" />
+              <Smartphone className="w-8 h-8 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-blue-900 mb-1">📱 Install for Offline Use</h3>
+              <h3 className="font-semibold text-blue-900 mb-1">📱 Install Mexo App</h3>
               <p className="text-sm text-blue-700 mb-2">
-                Add Expense Tracker to your home screen for:
+                Add to your home screen for offline use:
               </p>
               <ul className="text-xs text-blue-600 mb-3 pl-2">
                 <li>• Quick access anytime</li>
-                <li>• Full offline functionality</li>
-                <li>• Better mobile experience</li>
+                <li>• Works without internet</li>
+                <li>• Better experience</li>
               </ul>
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleInstall} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">

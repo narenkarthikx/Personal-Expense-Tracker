@@ -18,6 +18,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
   
-  // Redirect back to the main app
-  return NextResponse.redirect(new URL('/', request.url))
+  // Redirect to onboarding instead of main app
+  return NextResponse.redirect(new URL('/onboarding', request.url))
 }
