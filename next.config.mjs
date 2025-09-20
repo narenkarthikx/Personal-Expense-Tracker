@@ -19,7 +19,7 @@ const nextConfig = {
     // Newer configurations for stability
     serverMinification: true,
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'expense-tracker-pwa.vercel.app'],
+      allowedOrigins: ['localhost:3000', 'expense-tracker-pwa.vercel.app', 'mexo-expense-tracker.vercel.app'],
     },
   },
   // PWA configuration
@@ -27,6 +27,42 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
+  // Headers for PWA
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
+      {
+        source: '/manifest.webmanifest',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/manifest+json',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600',
+          },
+        ],
+      },
+      {
+        source: '/icon-:size(\\d{2,3}x\\d{2,3}).png',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400',
+          },
+        ],
+      },
+    ];
+  },
 }
 
 export default nextConfig
