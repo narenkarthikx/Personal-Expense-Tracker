@@ -25,13 +25,13 @@ A progressive web app (PWA) for tracking personal expenses, managing budgets, an
    pnpm dev
    ```
 
-## Deployment on Vercel
+## Deployment on Netlify
 
-This project is configured for seamless deployment on Vercel.
+This project is configured for seamless deployment on Netlify.
 
 ### Environment Variables
 
-Make sure to set these environment variables in your Vercel project:
+Make sure to set these environment variables in your Netlify project:
 
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key

@@ -1,0 +1,11 @@
+{
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "netlify:build": "next build"
+  },
+  "dependencies": {
+    "@netlify/plugin-nextjs": "^4.41.3"
+  }
+}

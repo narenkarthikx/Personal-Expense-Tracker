@@ -19,7 +19,7 @@ const nextConfig = {
     // Newer configurations for stability
     serverMinification: true,
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'expense-tracker-pwa.vercel.app', 'mexo-expense-tracker.vercel.app'],
+      allowedOrigins: ['localhost:3000', 'expense-tracker-pwa.netlify.app'],
     },
   },
   // PWA configuration
