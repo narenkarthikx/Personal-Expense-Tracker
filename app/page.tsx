@@ -187,7 +187,19 @@ export default function ExpenseTracker() {
                 <DropdownMenuItem onClick={() => setShowSettings(true)} className="flex items-center gap-2">
                   <Target className="w-4 h-4" /> Manage Categories
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/account")} className="flex items-center gap-2">
+                <DropdownMenuItem onClick={() => {
+                  // Force refresh auth before navigating to account page
+                  const goToAccount = async () => {
+                    try {
+                      await supabase.auth.getSession();
+                      router.push("/account");
+                    } catch (error) {
+                      console.error("Error checking session:", error);
+                      router.push("/login");
+                    }
+                  };
+                  goToAccount();
+                }} className="flex items-center gap-2">
                   <User className="w-4 h-4" /> Account Settings
                 </DropdownMenuItem>
               </DropdownMenuContent>
