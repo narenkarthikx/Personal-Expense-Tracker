@@ -53,6 +53,15 @@ export function ExpenseList({ expenses, onExpenseDeleted, onExpenseEdit, viewTyp
   if (viewType === "daily") {
     const today = new Date().toISOString().split("T")[0]
     filteredExpenses = expenses.filter((expense) => expense.date === today)
+    // If no expenses for today, show the most recent day with expenses
+    if (filteredExpenses.length === 0 && expenses.length > 0) {
+      // Find the most recent date with expenses
+      const sortedDates = [...new Set(expenses.map(e => e.date))].sort().reverse();
+      if (sortedDates.length > 0) {
+        const mostRecentDate = sortedDates[0];
+        filteredExpenses = expenses.filter((expense) => expense.date === mostRecentDate);
+      }
+    }
   }
 
   if (searchTerm) {

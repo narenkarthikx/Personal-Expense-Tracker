@@ -10,7 +10,13 @@ const hasValidConfig = supabaseUrl && supabaseAnonKey
 
 // Default client
 export const supabase = hasValidConfig 
-  ? createClient<Database>(supabaseUrl, supabaseAnonKey)
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
   : createMockClient() // Use mock client if credentials are missing
 
 // Client with shorter timeout for auth operations

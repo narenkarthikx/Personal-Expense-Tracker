@@ -60,7 +60,9 @@ export default function SignupPage() {
 
     try {
       // Start sign-up process
-      const { error: signUpError, profilePromise, refreshPromise, emailConfirmationRequired } = await signUp(email, password, name);
+      const signUpResult = await signUp(email, password, name);
+      const { error: signUpError, profilePromise, refreshPromise } = signUpResult;
+      const emailConfirmationRequired = (signUpResult as any).emailConfirmationRequired;
       
       if (signUpError) {
         console.error("Signup error details:", signUpError);

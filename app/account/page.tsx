@@ -23,15 +23,31 @@ function AccountLoading() {
 
 // The main account page component
 function AccountContent() {
-  const { user, isLoading, isLoggedIn, signOut } = useAuth()
+  const { user, isLoading, isLoggedIn, signOut, refreshUser } = useAuth()
   const router = useRouter()
 
   // Redirect if not logged in
   useEffect(() => {
-    if (!isLoading && !isLoggedIn) {
-      router.push("/login")
-    }
-  }, [isLoading, isLoggedIn, router])
+    console.log("Account page auth state:", { isLoading, isLoggedIn, user })
+    
+    const checkAuth = async () => {
+      // Add an extra check to refresh the auth state
+      if (!isLoggedIn && !isLoading) {
+        try {
+          await refreshUser();
+        } catch (error) {
+          console.error("Error refreshing user in account page:", error);
+        }
+      }
+      
+      // Only redirect after we've tried to refresh the auth state
+      if (!isLoading && !isLoggedIn) {
+        router.push("/login");
+      }
+    };
+    
+    checkAuth();
+  }, [isLoading, isLoggedIn, router, refreshUser]);
 
   const handleSignOut = async () => {
     await signOut()

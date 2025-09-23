@@ -33,6 +33,7 @@ export interface Expense {
   description: string
   date: string
   created_at: string
+  user_id?: string
 }
 
 export interface Budget {
