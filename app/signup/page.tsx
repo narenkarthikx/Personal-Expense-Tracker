@@ -109,6 +109,7 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
+          <h1 className="text-center text-3xl font-bold text-primary mb-2">Mexo Expense Tracker</h1>
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription>Enter your details to create your account</CardDescription>
         </CardHeader>

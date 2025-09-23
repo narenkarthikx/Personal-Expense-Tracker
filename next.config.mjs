@@ -24,14 +24,14 @@ const nextConfig = {
     // Disable Edge runtime as it's not compatible with some Supabase dependencies
     runtime: 'nodejs',
   },
-  // PWA configuration
+  // Basic production settings
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
   // Output standalone for better containerization
   output: 'standalone',
-  // Headers for PWA
+  // Simple headers for caching
   async headers() {
     return [
       {
@@ -39,29 +39,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
-          },
-        ],
-      },
-      {
-        source: '/manifest.webmanifest',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/manifest+json',
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=3600',
-          },
-        ],
-      },
-      {
-        source: '/icon-:size(\\d{2,3}x\\d{2,3}).png',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400',
+            value: 'public, max-age=3600, s-maxage=86400',
           },
         ],
       },

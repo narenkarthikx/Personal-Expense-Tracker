@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, TrendingUp, Calendar, Settings, Smartphone, Monitor, Target, User } from "lucide-react"
+import { Plus, TrendingUp, Calendar, Settings, Target, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,7 +14,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
 import { AddExpenseForm } from "./components/add-expense-form"
 import { EditExpenseForm } from "./components/edit-expense-form"
 import { ExpenseList } from "./components/expense-list"
@@ -24,9 +23,8 @@ import { ExportData } from "./components/export-data"
 import { BudgetTracker } from "./components/budget-tracker"
 import { CategoryManager } from "./components/category-manager"
 import { OfflineIndicator } from "./components/offline-indicator"
-import { InstallPrompt } from "./components/install-prompt"
 import { supabase } from "./lib/supabase"
-import { useIsMobile } from "@/hooks/use-mobile"
+import { useAuth } from "./context/auth-context"
 
 export interface Expense {
   id: string
@@ -55,29 +53,21 @@ export default function ExpenseTracker() {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [showSettings, setShowSettings] = useState(false)
-  const [compactView, setCompactView] = useState(false)
-  const isMobile = useIsMobile()
   const router = useRouter()
+  const { isLoggedIn, isLoading: authLoading } = useAuth()
 
-  // Set compact view automatically on mobile
+  // Redirect to login if not authenticated
   useEffect(() => {
-    setCompactView(isMobile)
-  }, [isMobile])
+    if (!authLoading && !isLoggedIn) {
+      router.push('/login')
+    }
+  }, [authLoading, isLoggedIn, router])
 
   useEffect(() => {
-    fetchData()
-    
-    // Apply compact class to body
-    if (compactView) {
-      document.body.classList.add('mobile-compact-view')
-    } else {
-      document.body.classList.remove('mobile-compact-view')
+    if (isLoggedIn) {
+      fetchData()
     }
-    
-    return () => {
-      document.body.classList.remove('mobile-compact-view')
-    }
-  }, [compactView])
+  }, [isLoggedIn])
 
   const fetchData = async () => {
     try {
@@ -144,6 +134,18 @@ export default function ExpenseTracker() {
 
   const monthlyTotal = thisMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
 
+  // Show loading state or redirect to login
+  if (authLoading || !isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -156,37 +158,26 @@ export default function ExpenseTracker() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 ${compactView ? 'mobile-compact-view' : ''}`}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <OfflineIndicator />
-      <InstallPrompt />
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-4">
           <div>
-            <h1 className={`${compactView ? 'text-xl' : 'text-3xl'} font-bold text-gray-900 flex items-center`}>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Mexo</span>
-              {!compactView && <span className="ml-2 text-gray-700">- My Expenses Optimized</span>}
+              <span className="ml-2 text-gray-700">- My Expenses Optimized</span>
             </h1>
-            {compactView ? (
-              <div className="flex items-center text-xs text-gray-600 mt-0.5">
-                <Calendar className="w-3 h-3 mr-1" />
-                {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </div>
-            ) : (
-              <p className="text-gray-600 mt-1">
-                Expenses Managed with budgets & analytics
-              </p>
-            )}
+            <p className="text-gray-600 mt-1">
+              Expenses Managed with budgets & analytics
+            </p>
           </div>
           <div className="flex flex-row gap-2 w-full sm:w-auto justify-between sm:justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={`${compactView ? 'h-10 w-10 p-0 flex items-center justify-center rounded-full border-gray-300' : 'h-9'}`}
-                >
-                  <Settings className={`${compactView ? 'w-5 h-5' : 'w-4 h-4 mr-2'}`} />
-                  {compactView ? '' : 'Settings'}
+                <Button variant="outline" className="h-9">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -198,32 +189,15 @@ export default function ExpenseTracker() {
                 <DropdownMenuItem onClick={() => router.push("/account")} className="flex items-center gap-2">
                   <User className="w-4 h-4" /> Account Settings
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {!isMobile && (
-                  <DropdownMenuItem className="flex justify-between" onSelect={(e) => e.preventDefault()}>
-                    <div className="flex items-center gap-2">
-                      {compactView ? (
-                        <Smartphone className="w-4 h-4" />
-                      ) : (
-                        <Monitor className="w-4 h-4" />
-                      )}
-                      <span>Compact View</span>
-                    </div>
-                    <Switch 
-                      checked={compactView} 
-                      onCheckedChange={setCompactView}
-                    />
-                  </DropdownMenuItem>
-                )}
               </DropdownMenuContent>
             </DropdownMenu>
             
             <Button
               onClick={() => setShowAddForm(true)}
-              className={`bg-blue-600 hover:bg-blue-700 ${compactView ? 'h-10 w-10 p-0 flex items-center justify-center rounded-full' : ''}`}
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              <Plus className={`${compactView ? 'w-5 h-5' : 'w-4 h-4 mr-2'}`} />
-              {compactView ? '' : 'Add Expense'}
+              <Plus className="w-4 h-4 mr-2" />
+              Add Expense
             </Button>
           </div>
         </div>
@@ -231,24 +205,24 @@ export default function ExpenseTracker() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-6">
           <Card className="border-blue-100">
-            <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${compactView ? 'py-2 px-3' : 'pb-2'}`}>
-              <CardTitle className={compactView ? "text-xs font-medium" : "text-sm font-medium"}>Today</CardTitle>
-              <Calendar className={compactView ? "h-4 w-4 text-blue-500" : "h-4 w-4 text-muted-foreground"} />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className={compactView ? "py-2 px-3" : ""}>
-              <div className={compactView ? "text-xl font-bold text-blue-600" : "text-2xl font-bold"}>₹{todayTotal.toFixed(2)}</div>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{todayTotal.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 {todayExpenses.length} transaction{todayExpenses.length !== 1 ? "s" : ""} today
               </p>
             </CardContent>
           </Card>
           <Card className="border-indigo-100">
-            <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${compactView ? 'py-2 px-3' : 'pb-2'}`}>
-              <CardTitle className={compactView ? "text-xs font-medium" : "text-sm font-medium"}>Month</CardTitle>
-              <TrendingUp className={compactView ? "h-4 w-4 text-indigo-500" : "h-4 w-4 text-muted-foreground"} />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Month</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className={compactView ? "py-2 px-3" : ""}>
-              <div className={compactView ? "text-xl font-bold text-indigo-600" : "text-2xl font-bold"}>₹{monthlyTotal.toFixed(2)}</div>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{monthlyTotal.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 {thisMonthExpenses.length} transaction{thisMonthExpenses.length !== 1 ? "s" : ""} this month
               </p>
@@ -258,12 +232,12 @@ export default function ExpenseTracker() {
 
         {/* Main Content */}
         <Tabs defaultValue="daily" className="space-y-4">
-          <TabsList className={`grid w-full ${compactView ? 'text-xs p-0.5' : ''} grid-cols-5`}>
-            <TabsTrigger value="daily">{compactView ? '📅' : 'Daily'}</TabsTrigger>
-            <TabsTrigger value="monthly">{compactView ? '📊' : 'Monthly'}</TabsTrigger>
-            <TabsTrigger value="summary">{compactView ? '📈' : 'Analytics'}</TabsTrigger>
-            <TabsTrigger value="budget">{compactView ? '💰' : 'Budget'}</TabsTrigger>
-            <TabsTrigger value="export">{compactView ? '📤' : 'Export'}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="daily">Daily</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="summary">Analytics</TabsTrigger>
+            <TabsTrigger value="budget">Budget</TabsTrigger>
+            <TabsTrigger value="export">Export</TabsTrigger>
           </TabsList>
 
           <TabsContent value="daily" className="space-y-4">

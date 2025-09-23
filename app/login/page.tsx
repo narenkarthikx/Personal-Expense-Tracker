@@ -87,14 +87,12 @@ export default function LoginPage() {
       </Suspense>
       
       <div className="container mx-auto px-4 max-w-md">
-        <Button 
-          variant="ghost" 
-          className="mb-6" 
-          onClick={() => router.push("/")}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
-        </Button>
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Mexo</span>
+          </h1>
+          <p className="text-gray-600">My Expenses Optimized</p>
+        </div>
         
         <Card>
           <CardHeader>

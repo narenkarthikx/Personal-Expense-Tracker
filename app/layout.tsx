@@ -9,25 +9,14 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "💰 Personal Expense Tracker",
-  description: "Track your daily expenses with ease. A simple and effective expense management app.",
-  generator: 'v0.dev',
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Expense Tracker"
-  },
-  applicationName: "Expense Tracker"
+  title: "Mexo - Expense Tracker",
+  description: "Track your daily expenses with ease. A simple and effective expense management app."
 }
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#2563eb",
-  viewportFit: "cover"
+  themeColor: "#2563eb"
 }
 
 export default function RootLayout({
