@@ -21,6 +21,8 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'expense-tracker-pwa.netlify.app'],
     },
+    // Disable Edge runtime as it's not compatible with some Supabase dependencies
+    runtime: 'nodejs',
   },
   // PWA configuration
   reactStrictMode: true,

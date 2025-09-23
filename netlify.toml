@@ -1,6 +1,6 @@
 [build]
   command = "pnpm run netlify-build"
-  publish = ".next/standalone"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -11,6 +11,10 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+  
+[plugin.inputs]
+  enable_inline_function_execution = true
+  static_page_generation = true
 
 [[headers]]
   for = "/*"
@@ -32,12 +36,12 @@
     Cache-Control = "public, max-age=86400"
 
 [[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
   force = false
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
