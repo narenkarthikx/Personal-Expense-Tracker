@@ -3,6 +3,16 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { supabase, supabaseAuth, type Session } from "../lib/supabase"
 import { type UserProfile } from "../lib/database-types"
+import { AuthError, AuthSession } from '@supabase/supabase-js'
+
+type AuthChangeEvent = 
+  | 'INITIAL_SESSION'
+  | 'SIGNED_IN'
+  | 'SIGNED_OUT'
+  | 'USER_UPDATED'
+  | 'USER_DELETED'
+  | 'PASSWORD_RECOVERY'
+  | 'TOKEN_REFRESHED'
 
 type AuthContextType = {
   user: UserProfile | null
@@ -25,49 +35,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
+    let mounted = true;
+    
     const initializeAuth = async () => {
+      if (!mounted) return;
       setIsLoading(true);
+      
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // First try to get the session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          throw error;
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
         }
         
-        if (!session) {
-          setSession({ user: null, isLoggedIn: false });
-          setIsLoading(false);
-          return;
-        }
-        
-        const { data: userMetadata } = await supabase.auth.getUser();
-        
-        setSession({ 
-          user: {
-            id: session.user.id,
-            email: session.user.email || null,
-            name: userMetadata?.user?.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-            user_metadata: userMetadata?.user?.user_metadata || {}
-          },
-          isLoggedIn: true
+        // Set up the auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event: AuthChangeEvent, currentSession: AuthSession | null) => {
+          console.log("Auth state changed:", event, !!currentSession);
+          
+          if (!mounted) return;
+          
+          if (event === 'SIGNED_OUT') {
+            setSession({ user: null, isLoggedIn: false });
+            return;
+          }
+          
+          if (currentSession) {
+            const { data: userMetadata } = await supabase.auth.getUser();
+            setSession({
+              user: {
+                id: currentSession.user.id,
+                email: currentSession.user.email || null,
+                name: userMetadata?.user?.user_metadata?.name || currentSession.user.email?.split('@')[0] || 'User',
+                user_metadata: userMetadata?.user?.user_metadata || {}
+              },
+              isLoggedIn: true
+            });
+          }
         });
+        
+        // If we have an initial session, set it
+        if (session) {
+          const { data: userMetadata } = await supabase.auth.getUser();
+          if (mounted) {
+            setSession({
+              user: {
+                id: session.user.id,
+                email: session.user.email || null,
+                name: userMetadata?.user?.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                user_metadata: userMetadata?.user?.user_metadata || {}
+              },
+              isLoggedIn: true
+            });
+          }
+        } else {
+          if (mounted) {
+            setSession({ user: null, isLoggedIn: false });
+          }
+        }
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error("Error initializing auth:", error);
-        setSession({ user: null, isLoggedIn: false });
+        if (mounted) {
+          setSession({ user: null, isLoggedIn: false });
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeAuth();
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
-      refreshUser();
-    });
-
     return () => {
-      subscription.unsubscribe();
+      mounted = false;
     };
   }, []);
 
