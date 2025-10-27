@@ -44,8 +44,15 @@ export async function middleware(request: NextRequest) {
         supabaseAnonKey,
         { 
           auth: { 
-            persistSession: false,
-            autoRefreshToken: false,
+            persistSession: true,
+            autoRefreshToken: true,
+            storageKey: 'app-auth',
+            detectSessionInUrl: true,
+            storage: {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            }
           },
           global: {
             headers: {

@@ -200,28 +200,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Use the faster auth client for sign-out
-      // Set a timeout for the sign-out process
+      // First clear all auth storage
+      const storageKeys = [
+        'app-auth',
+        'supabase.auth.token',
+        'supabase-auth-token',
+        'supabase.auth.refreshToken',
+        'redirectPath'
+      ];
+      
+      storageKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        } catch (e) {
+          console.warn(`Failed to remove ${key}:`, e);
+        }
+      });
+
+      // Update local state first
+      setSession({ user: null, isLoggedIn: false });
+      
+      // Then sign out from Supabase with timeout
       const signOutPromise = supabaseAuth.auth.signOut();
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Sign-out timed out')), 3000)
       );
       
-      // Race between the sign-out and the timeout
       await Promise.race([signOutPromise, timeoutPromise])
         .catch(error => {
           console.warn("Sign-out timeout or error:", error);
-          // Continue anyway
         });
+
+      // Force refresh the page to clear any cached state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     } catch (error) {
       console.error("Error during sign-out:", error);
-      // Continue anyway, we still want to clear local state
-    } finally {
-      // Always update local state, even if the server request fails
-      setSession({ user: null, isLoggedIn: false });
-      
-      // Clear any cached data
-      localStorage.removeItem("supabase.auth.token");
+      throw error; // Let the component handle the error
     }
   }
 

@@ -14,23 +14,17 @@ export function UserAccount() {
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
     setIsSigningOut(true);
     
     try {
-      // Start sign-out process but don't wait for it to complete
-      const signOutPromise = signOut();
-      
-      // Immediately redirect to login page
-      router.push("/login");
-      
-      // Let the sign-out process complete in the background
-      signOutPromise.catch(error => {
-        console.error("Error during sign-out:", error);
-        // Error is handled, nothing more to do here
-      });
+      await signOut();
+      // No need to redirect here - signOut function handles it
     } catch (error) {
-      console.error("Error initiating sign-out:", error);
+      console.error("Error during sign-out:", error);
       setIsSigningOut(false);
+      // Show an error message to the user
+      alert("Failed to sign out. Please try again.");
     }
   }
 
