@@ -91,14 +91,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         
         // If we have an initial session, set it
-        if (session) {
+        if (session?.user) {
           const { data: userMetadata } = await supabase.auth.getUser();
           if (mounted) {
+            const user = session.user;
             setSession({
               user: {
-                id: session.user.id,
-                email: session.user.email || null,
-                name: userMetadata?.user?.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                id: user.id,
+                email: user.email || null,
+                name: userMetadata?.user?.user_metadata?.name || user.email?.split('@')[0] || 'User',
                 user_metadata: userMetadata?.user?.user_metadata || {}
               },
               isLoggedIn: true
