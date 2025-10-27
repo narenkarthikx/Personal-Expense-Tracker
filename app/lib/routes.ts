@@ -12,6 +12,11 @@ export const protectedRoutes = [
 
 // Create an object mapping route patterns to their options
 export const routeConfig = {
+  '/': {
+    dynamic: false,
+    protected: true,
+    revalidate: 0
+  },
   '/account': {
     dynamic: true,
     protected: true,
@@ -23,6 +28,11 @@ export const routeConfig = {
     revalidate: 0
   },
   '/signup': {
+    dynamic: true,
+    protected: false,
+    revalidate: 0
+  },
+  '/auth/callback': {
     dynamic: true,
     protected: false,
     revalidate: 0

@@ -21,14 +21,28 @@ export default function AuthCallbackPage() {
 
       // Process auth callback
       try {
-        // Exchange the code for a session
-        await supabase.auth.exchangeCodeForSession(hashParams.access_token || window.location.hash)
+        // Get return URL from localStorage if it exists
+        const returnUrl = localStorage.getItem('redirectPath') || '/'
+        localStorage.removeItem('redirectPath') // Clean up
 
-        // Redirect to the home page
-        router.push("/")
+        // Exchange the code for a session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(hashParams.access_token || window.location.hash)
+        
+        if (error) {
+          throw error
+        }
+
+        if (data?.session) {
+          // Wait a moment for auth state to update
+          await new Promise(resolve => setTimeout(resolve, 500))
+          // Redirect to the saved return URL
+          router.push(returnUrl)
+        } else {
+          throw new Error('No session returned')
+        }
       } catch (error) {
         console.error("Error processing auth callback:", error)
-        router.push("/login?error=callback_error")
+        router.push("/login?error=" + encodeURIComponent(error instanceof Error ? error.message : 'callback_error'))
       }
     }
 
