@@ -3,6 +3,7 @@
 import { Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../context/auth-context"
+import { withAuth } from "../components/with-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, LogOut, UserCircle } from "lucide-react"
@@ -89,10 +90,12 @@ function AccountContent() {
 }
 
 // Main export - wrap everything in Suspense
+const ProtectedAccountContent = withAuth(AccountContent)
+
 export default function AccountPage() {
   return (
     <Suspense fallback={<AccountLoading />}>
-      <AccountContent />
+      <ProtectedAccountContent />
     </Suspense>
   )
 }

@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let authListener: any = null;
     
     const initializeAuth = async () => {
       if (!mounted) return;
@@ -43,11 +44,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       try {
         // First try to get the session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("Session error:", sessionError);
           throw sessionError;
+        }
+
+        // Initialize session state immediately if we have a session
+        if (initialSession?.user) {
+          setSession({
+            user: {
+              id: initialSession.user.id,
+              email: initialSession.user.email || null,
+              name: initialSession.user.user_metadata?.name || initialSession.user.email?.split('@')[0] || 'User',
+              user_metadata: initialSession.user.user_metadata || {}
+            },
+            isLoggedIn: true
+          });
         }
         
         // Set up the auth state change listener

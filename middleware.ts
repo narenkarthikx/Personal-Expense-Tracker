@@ -3,20 +3,29 @@ import type { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { protectedRoutes } from './app/lib/routes'
 
+// Helper function to get base URL
+function getBaseUrl(req: NextRequest) {
+  const host = req.headers.get('host') || 'localhost:3000'
+  const protocol = host.includes('localhost') ? 'http:' : 'https:'
+  return `${protocol}//${host}`
+}
+
 export async function middleware(request: NextRequest) {
-  // Get the pathname of the request
   const path = request.nextUrl.pathname
-
-  // Define auth routes - routes for authentication
   const authRoutes = ['/login', '/signup']
-
-  // Check if it's a protected route
   const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
-  
-  // Check if it's an auth route
   const isAuthRoute = authRoutes.some(route => path.startsWith(route))
 
-  // Get the cookie string
+  // Skip middleware for static files and API routes
+  if (
+    path.startsWith('/_next') ||
+    path.startsWith('/static') ||
+    path.startsWith('/api')
+  ) {
+    return NextResponse.next()
+  }
+
+  const baseUrl = getBaseUrl(request)
   const cookieString = request.headers.get('cookie') || ''
   
   // Only execute auth checks on protected routes or auth routes
